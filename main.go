@@ -7,10 +7,12 @@ import (
 )
 
 func main() {
+	openDatabase()
+	createTables()
+
 	// Serve everything inside the static/ folder.
 	// http.FileServer returns a handler that reads files from the given directory.
-	// http.StripPrefix removes "/static/" from the URL before looking for the file,
-	// so a request for "/" maps to "static/index.html".
+	// A request for "/" automatically maps to "static/index.html".
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/", fs)
 
