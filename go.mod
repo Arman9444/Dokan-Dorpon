@@ -1,6 +1,8 @@
-module dokandorpon
+module grocery
 
 go 1.22
+
+require modernc.org/sqlite v1.35.0
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -13,5 +15,4 @@ require (
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
-	modernc.org/sqlite v1.35.0 // indirect
 )
