@@ -41,16 +41,16 @@ func createTables() {
 			unit      TEXT    NOT NULL,
 			buy_price REAL    NOT NULL,
 			sell_price REAL   NOT NULL,
-			stock     REAL    NOT NULL DEFAULT 0,
-			min_stock REAL    NOT NULL DEFAULT 0,
+			stock     INTEGER NOT NULL DEFAULT 0,
+			min_stock INTEGER NOT NULL DEFAULT 0,
 			discount  INTEGER NOT NULL DEFAULT 0
 		);
 
 		CREATE TABLE IF NOT EXISTS purchases (
 			id            INTEGER PRIMARY KEY AUTOINCREMENT,
 			product_id    INTEGER NOT NULL REFERENCES products(id),
-			quantity      REAL    NOT NULL,
-			remaining     REAL    NOT NULL,
+			quantity      INTEGER NOT NULL,
+			remaining     INTEGER NOT NULL,
 			buy_price     REAL    NOT NULL,
 			expiry_date   TEXT    NOT NULL DEFAULT '',
 			purchase_date TEXT    NOT NULL
@@ -59,7 +59,7 @@ func createTables() {
 		CREATE TABLE IF NOT EXISTS sales (
 			id          INTEGER PRIMARY KEY AUTOINCREMENT,
 			product_id  INTEGER NOT NULL REFERENCES products(id),
-			quantity    REAL    NOT NULL,
+			quantity    INTEGER NOT NULL,
 			sell_price  REAL    NOT NULL,
 			buy_price   REAL    NOT NULL,
 			discount    INTEGER NOT NULL DEFAULT 0,
