@@ -4,9 +4,236 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dokan Dorpon</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Dokan Dorpon</h1>
-  <p>Server cholse. Baaki kaj ashche...</p>
+  <header>
+    <h1>Dokan Dorpon</h1>
+    <p>Today: <span id="today">-</span> | Festival: <span id="occasions">-</span></p>
+  </header>
+
+  <nav>
+    <button class="active">Dashboard</button>
+    <button>Products</button>
+    <button>Sell</button>
+    <button>Stock in</button>
+    <button>Reports</button>
+    <button>Suggestions</button>
+  </nav>
+
+  <main>
+    <div id="message" class="message hidden"></div>
+
+    <section id="dashboard">
+      <h2>Dashboard</h2>
+      <div class="stat">Today's income <b id="today-income">0</b></div>
+      <div class="stat">Today's profit <b id="today-profit">0</b></div>
+      <div class="stat">Items sold today <b id="today-items">0</b></div>
+
+      <h3>Low stock</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Stock</th>
+              <th>Min stock</th>
+            </tr>
+          </thead>
+          <tbody id="low-stock-body">
+            <tr><td colspan="3" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Expiry</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Left</th>
+              <th>Expiry date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="expiry-body">
+            <tr><td colspan="4" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Monthly chart</h3>
+      <label>Year <input type="number" id="chart-year"></label>
+      <label>Product
+        <select id="chart-product">
+          <option value="">All products</option>
+        </select>
+      </label>
+      <label>Show
+        <select id="chart-metric">
+          <option value="quantity">Quantity</option>
+          <option value="income">Income</option>
+          <option value="profit">Profit</option>
+        </select>
+      </label>
+      <div id="chart" class="chart">
+        <p class="empty">No data yet</p>
+      </div>
+    </section>
+
+    <section id="products">
+      <h2>Products</h2>
+      <input type="hidden" id="product-id">
+      <label>Name <input type="text" id="product-name"></label>
+      <label>Category <input type="text" id="product-category"></label>
+      <label>Unit <input type="text" id="product-unit"></label>
+      <label>Buy price <input type="number" id="product-buy"></label>
+      <label>Sell price <input type="number" id="product-sell"></label>
+      <label>Min stock <input type="number" id="product-min"></label>
+      <p>
+        <button class="primary">Save</button>
+        <button>Clear</button>
+      </p>
+
+      <h3>Product list</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Unit</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th>Stock</th>
+              <th>Min</th>
+              <th>Discount %</th>
+              <th>Final price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="products-body">
+            <tr><td colspan="10" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sell">
+      <h2>Sell</h2>
+      <label>Product
+        <select id="sell-product">
+          <option value="">-- Select product --</option>
+        </select>
+      </label>
+      <label>Quantity <input type="number" id="sell-qty" value="1"></label>
+      <div class="stat">Total <b id="sell-total">0</b></div>
+      <p><button class="primary">Sell</button></p>
+
+      <h3>Recent sales</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Discount %</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="recent-body">
+            <tr><td colspan="6" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="stock-in">
+      <h2>Stock in</h2>
+      <label>Product
+        <select id="stock-product">
+          <option value="">-- Select product --</option>
+        </select>
+      </label>
+      <label>Quantity <input type="number" id="stock-qty"></label>
+      <label>Buy price <input type="number" id="stock-buy"></label>
+      <label>Expiry date (optional) <input type="date" id="stock-expiry"></label>
+      <p><button class="primary">Add stock</button></p>
+    </section>
+
+    <section id="reports">
+      <h2>Reports</h2>
+      <label>Period <input type="text" id="report-period" placeholder="2026 or 2026-10 or 2026-10-15"></label>
+      <p><button class="primary">Show</button></p>
+
+      <div class="stat">Items sold <b id="report-qty">0</b></div>
+      <div class="stat">Income <b id="report-income">0</b></div>
+      <div class="stat">Cost <b id="report-cost">0</b></div>
+      <div class="stat">Profit <b id="report-profit">0</b></div>
+      <div class="stat">Best product <b id="report-best">-</b></div>
+
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Sold</th>
+              <th>Income</th>
+              <th>Cost</th>
+              <th>Profit</th>
+            </tr>
+          </thead>
+          <tbody id="report-body">
+            <tr><td colspan="6" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="suggestions">
+      <h2>Suggestions</h2>
+
+      <h3>What to buy</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Stock</th>
+              <th>Avg/day</th>
+              <th>Expected</th>
+              <th>Buy</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="buy-body">
+            <tr><td colspan="6" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Discount suggestions</h3>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Current %</th>
+              <th>Suggested %</th>
+              <th>Reason</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="discount-body">
+            <tr><td colspan="5" class="empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
