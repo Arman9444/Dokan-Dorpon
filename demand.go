@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"slices"
+	"sort"
 	"time"
 )
 
@@ -19,6 +21,18 @@ type Season struct {
 	Months    []int              `json:"months"`
 	Effects   map[string]float64 `json:"effects"`
 	LowSupply []string           `json:"low_supply"` // categories hard to get in this season
+}
+
+type BuySuggestion struct {
+	ProductID int      `json:"product_id"`
+	Name      string   `json:"name"`
+	Unit      string   `json:"unit"`
+	Stock     int      `json:"stock"`
+	AvgDaily  float64  `json:"avg_daily"`
+	CoverDays int      `json:"cover_days"`
+	Expected  float64  `json:"expected"`
+	Buy       int      `json:"buy"`
+	Reasons   []string `json:"reasons"`
 }
 
 // Each effect is written once and reused for 2026 and 2027.
@@ -105,4 +119,108 @@ func getOccasions(w http.ResponseWriter, r *http.Request) {
 		"seasons":   activeSeasons,
 		"upcoming":  upcoming,
 	})
+}
+
+// isLowSupply returns true if a season of that month has this category in its low supply list.
+// Example: Vegetable in July to September (Monsoon).
+func isLowSupply(category string, day time.Time) bool {
+	month := int(day.Month())
+	for _, s := range seasons {
+		if slices.Contains(s.Months, month) && slices.Contains(s.LowSupply, category) {
+			return true
+		}
+	}
+	return false
+}
+
+// soldLast30Days returns how much of one product was sold in the last 30 full days.
+// Today is not counted, because today is not finished yet and would make the average look low.
+// COALESCE turns NULL (no sales at all) into 0.
+func soldLast30Days(productID int) (int, error) {
+	var sold int
+	err := db.QueryRow("SELECT COALESCE(SUM(quantity), 0) FROM sales WHERE product_id = ? AND sale_date >= ? AND sale_date < ?",
+		productID, daysFromToday(-30), today()).Scan(&sold)
+	return sold, err
+}
+
+// makeBuySuggestion works out how much of one product to buy. Only math, no database.
+func makeBuySuggestion(p Product, soldLast30 int) BuySuggestion {
+	now := time.Now()
+	avgDaily := float64(soldLast30) / 30
+
+	// Buy enough for 7 days, or 14 days if the market has low supply of this category.
+	coverDays := 7
+	lowSupply := isLowSupply(p.Category, now)
+	if lowSupply {
+		coverDays = 14
+	}
+
+	// We add each day separately, so a festival that starts in a few days is counted too.
+	expected := 0.0
+	reasons := []string{}
+	for i := 0; i < coverDays; i++ {
+		day := now.AddDate(0, 0, i)
+		multiplier, dayReasons := getMultiplier(p.Category, day)
+		expected = expected + avgDaily*multiplier
+		// The same festival hits many days, but we show its reason only once.
+		for _, reason := range dayReasons {
+			if !slices.Contains(reasons, reason) {
+				reasons = append(reasons, reason)
+			}
+		}
+	}
+	if lowSupply {
+		reasons = append(reasons, "Low market supply")
+	}
+
+	// Round first, so the number we show and the number we use are the same.
+	expected = round2(expected)
+	buy := int(math.Ceil(expected)) - p.Stock
+	// After buying, the stock should not be below min stock.
+	if p.Stock+buy < p.MinStock {
+		buy = p.MinStock - p.Stock
+	}
+	// We already have enough.
+	if buy < 0 {
+		buy = 0
+	}
+
+	return BuySuggestion{
+		ProductID: p.ID,
+		Name:      p.Name,
+		Unit:      p.Unit,
+		Stock:     p.Stock,
+		AvgDaily:  round2(avgDaily),
+		CoverDays: coverDays,
+		Expected:  expected,
+		Buy:       buy,
+		Reasons:   reasons,
+	}
+}
+
+// GET /api/suggestions/buy
+func buySuggestions(w http.ResponseWriter, r *http.Request) {
+	// loadProducts closes its rows before it returns. We have only 1 connection,
+	// so this lets us run soldLast30Days inside the loop.
+	products, err := loadProducts()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	suggestions := []BuySuggestion{}
+	for _, p := range products {
+		sold, err := soldLast30Days(p.ID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		suggestions = append(suggestions, makeBuySuggestion(p, sold))
+	}
+
+	// Biggest buy first.
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Buy > suggestions[j].Buy
+	})
+	writeJSON(w, suggestions)
 }
