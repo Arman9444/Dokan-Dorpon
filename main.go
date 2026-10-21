@@ -20,6 +20,9 @@ func main() {
 	http.HandleFunc("POST /api/purchases", addPurchase)
 	http.HandleFunc("POST /api/purchases/remove-expired", removeExpired)
 
+	http.HandleFunc("GET /api/occasions", getOccasions)
+	http.HandleFunc("GET /api/suggestions/buy", buySuggestions)
+
 	// Serve everything inside the static/ folder.
 	// http.FileServer returns a handler that reads files from the given directory.
 	// A request for "/" automatically maps to "static/index.html".
