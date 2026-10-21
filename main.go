@@ -9,6 +9,7 @@ import (
 func main() {
 	openDatabase()
 	createTables()
+	insertSampleData()
 
 	http.HandleFunc("GET /api/products", listProducts)
 	http.HandleFunc("POST /api/products", addProduct)
