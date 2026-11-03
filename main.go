@@ -7,7 +7,8 @@ import (
 )
 
 func main() {
-	openDatabase()
+	fileName:="grocery.db"
+	openDatabase(fileName)
 	createTables()
 	insertSampleData()
 
