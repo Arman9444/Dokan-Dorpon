@@ -17,13 +17,35 @@ func loadFestivals()([]Festival,error){
 	}
 	defer rows.Close()
 
-	festivals:=[]Festivals{}
+	festivals:=[]Festival{}
 	for rows.Next(){
 		var f Festival
 		var effects string
-		err:=rows.Scan(&f.ID,&f,Name,&f.Start,&f.End,&effects)
+		err:=rows.Scan(&f.ID,&f.Name,&f.Start,&f.End,&effects)
 		if err!=nil{
-			
+			return nil,err
 		}
+		err=json.Unmarshal([]byte(effects),&f.Effects)
+		if err!=nil{
+			return nil,err
+		}
+		festivals=append(festivals,f)
 	}
+	return festivals,rows.Err()
+}
+
+
+func insertFestivals(f Festival)(int,error){
+	effects,err:=json.Marshal(f.Effects)
+	if err!=nil{
+		return 0,err
+	}
+	result,err:=db.Exec("INSERT INTO festivals (name,start_date,end_date,effects) VALUES (?,?,?,?)",
+  						f.Name, f.Start, f.End, string(effects))
+	
+	if err!=nil{
+		return 0,err
+	}
+	id,err:=result.LastInsertId()
+	return int(id),err
 }
