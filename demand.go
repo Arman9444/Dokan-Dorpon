@@ -10,6 +10,7 @@ import (
 )
 
 type Festival struct {
+	ID int  `json:"id"`
 	Name    string             `json:"name"`
 	Start   string             `json:"start"` // "YYYY-MM-DD"
 	End     string             `json:"end"`
@@ -46,15 +47,15 @@ var pujaEffects = map[string]float64{"Dairy": 2, "Sugar": 2, "Oil": 1.5}
 // The 2027 Eid/Ramadan dates are expected; fix them after the moon sighting.
 // Order: name, start, end, effects
 var festivals = []Festival{
-	{"Ramadan 2026", "2026-02-19", "2026-03-20", ramadanEffects},
-	{"Eid-ul-Fitr 2026", "2026-03-14", "2026-03-23", eidFitrEffects},
-	{"Pohela Boishakh 2026", "2026-04-10", "2026-04-14", boishakhEffects},
-	{"Qurbani Eid 2026", "2026-05-17", "2026-05-30", qurbaniEffects},
-	{"Durga Puja 2026", "2026-10-14", "2026-10-21", pujaEffects},
-	{"Ramadan 2027", "2027-02-09", "2027-03-10", ramadanEffects},
-	{"Eid-ul-Fitr 2027", "2027-03-03", "2027-03-13", eidFitrEffects},
-	{"Pohela Boishakh 2027", "2027-04-10", "2027-04-14", boishakhEffects},
-	{"Qurbani Eid 2027", "2027-05-07", "2027-05-20", qurbaniEffects},
+	{0,"Ramadan 2026", "2026-02-19", "2026-03-20", ramadanEffects},
+	{0,"Eid-ul-Fitr 2026", "2026-03-14", "2026-03-23", eidFitrEffects},
+	{0,"Pohela Boishakh 2026", "2026-04-10", "2026-04-14", boishakhEffects},
+	{0,"Qurbani Eid 2026", "2026-05-17", "2026-05-30", qurbaniEffects},
+	{0,"Durga Puja 2026", "2026-10-14", "2026-10-21", pujaEffects},
+	{0,"Ramadan 2027", "2027-02-09", "2027-03-10", ramadanEffects},
+	{0,"Eid-ul-Fitr 2027", "2027-03-03", "2027-03-13", eidFitrEffects},
+	{0,"Pohela Boishakh 2027", "2027-04-10", "2027-04-14", boishakhEffects},
+	{0,"Qurbani Eid 2027", "2027-05-07", "2027-05-20", qurbaniEffects},
 }
 
 // Order: name, months, effects, low supply
