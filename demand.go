@@ -10,7 +10,7 @@ import (
 )
 
 type Festival struct {
-	ID int  `json:"id"`
+	ID      int                `json:"id"`
 	Name    string             `json:"name"`
 	Start   string             `json:"start"` // "YYYY-MM-DD"
 	End     string             `json:"end"`
@@ -43,19 +43,21 @@ var boishakhEffects = map[string]float64{"Sweet": 1.5, "Dairy": 1.5}
 var qurbaniEffects = map[string]float64{"Spice": 3, "Vegetable": 1.5, "Oil": 1.5}
 var pujaEffects = map[string]float64{"Dairy": 2, "Sugar": 2, "Oil": 1.5}
 
-// Eid and Ramadan depend on the moon, so these dates must be updated every year.
+// The festivals saved into the database on the first run (see insertDefaultFestivals in festivals.go).
+// After that they live in the database, and the shop adds, edits and deletes them in the Festivals tab.
+// Eid and Ramadan depend on the moon, so their dates must be updated every year in that tab.
 // The 2027 Eid/Ramadan dates are expected; fix them after the moon sighting.
-// Order: name, start, end, effects
-var festivals = []Festival{
-	{0,"Ramadan 2026", "2026-02-19", "2026-03-20", ramadanEffects},
-	{0,"Eid-ul-Fitr 2026", "2026-03-14", "2026-03-23", eidFitrEffects},
-	{0,"Pohela Boishakh 2026", "2026-04-10", "2026-04-14", boishakhEffects},
-	{0,"Qurbani Eid 2026", "2026-05-17", "2026-05-30", qurbaniEffects},
-	{0,"Durga Puja 2026", "2026-10-14", "2026-10-21", pujaEffects},
-	{0,"Ramadan 2027", "2027-02-09", "2027-03-10", ramadanEffects},
-	{0,"Eid-ul-Fitr 2027", "2027-03-03", "2027-03-13", eidFitrEffects},
-	{0,"Pohela Boishakh 2027", "2027-04-10", "2027-04-14", boishakhEffects},
-	{0,"Qurbani Eid 2027", "2027-05-07", "2027-05-20", qurbaniEffects},
+// Order: id (0 here, the database gives the real one), name, start, end, effects
+var defaultFestivals = []Festival{
+	{0, "Ramadan 2026", "2026-02-19", "2026-03-20", ramadanEffects},
+	{0, "Eid-ul-Fitr 2026", "2026-03-14", "2026-03-23", eidFitrEffects},
+	{0, "Pohela Boishakh 2026", "2026-04-10", "2026-04-14", boishakhEffects},
+	{0, "Qurbani Eid 2026", "2026-05-17", "2026-05-30", qurbaniEffects},
+	{0, "Durga Puja 2026", "2026-10-14", "2026-10-21", pujaEffects},
+	{0, "Ramadan 2027", "2027-02-09", "2027-03-10", ramadanEffects},
+	{0, "Eid-ul-Fitr 2027", "2027-03-03", "2027-03-13", eidFitrEffects},
+	{0, "Pohela Boishakh 2027", "2027-04-10", "2027-04-14", boishakhEffects},
+	{0, "Qurbani Eid 2027", "2027-05-07", "2027-05-20", qurbaniEffects},
 }
 
 // Order: name, months, effects, low supply
@@ -67,7 +69,9 @@ var seasons = []Season{
 
 // getMultiplier returns how much the demand of a category changes on one day, and why.
 // It starts at 1 (normal) and multiplies every festival and season that matches.
-func getMultiplier(category string, day time.Time) (float64, []string) {
+// The caller loads the festivals once (loadFestivals) and passes them in, so this stays
+// plain math with no database, even when it runs for many days and products.
+func getMultiplier(category string, day time.Time, festivals []Festival) (float64, []string) {
 	multiplier := 1.0
 	reasons := []string{}
 	date := day.Format("2006-01-02")
@@ -95,7 +99,13 @@ func getMultiplier(category string, day time.Time) (float64, []string) {
 func getOccasions(w http.ResponseWriter, r *http.Request) {
 	now := today()
 	limit := daysFromToday(60)
-	month := int(time.Now().Month())
+	month := int(todayTime().Month())
+
+	festivals, err := loadFestivals()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	active := []Festival{}
 	upcoming := []Festival{}
@@ -119,6 +129,7 @@ func getOccasions(w http.ResponseWriter, r *http.Request) {
 		"festivals": active,
 		"seasons":   activeSeasons,
 		"upcoming":  upcoming,
+		"demo":      !demoDay.IsZero(), // true when the date is pretend (see demo.go)
 	})
 }
 
@@ -145,8 +156,8 @@ func soldLast30Days(productID int) (int, error) {
 }
 
 // makeBuySuggestion works out how much of one product to buy. Only math, no database.
-func makeBuySuggestion(p Product, soldLast30 int) BuySuggestion {
-	now := time.Now()
+func makeBuySuggestion(p Product, soldLast30 int, festivals []Festival) BuySuggestion {
+	now := todayTime()
 	avgDaily := float64(soldLast30) / 30
 
 	// Buy enough for 7 days, or 14 days if the market has low supply of this category.
@@ -161,7 +172,7 @@ func makeBuySuggestion(p Product, soldLast30 int) BuySuggestion {
 	reasons := []string{}
 	for i := 0; i < coverDays; i++ {
 		day := now.AddDate(0, 0, i)
-		multiplier, dayReasons := getMultiplier(p.Category, day)
+		multiplier, dayReasons := getMultiplier(p.Category, day, festivals)
 		expected = expected + avgDaily*multiplier
 		// The same festival hits many days, but we show its reason only once.
 		for _, reason := range dayReasons {
@@ -208,6 +219,11 @@ func buySuggestions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	festivals, err := loadFestivals()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	suggestions := []BuySuggestion{}
 	for _, p := range products {
@@ -216,7 +232,7 @@ func buySuggestions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		suggestions = append(suggestions, makeBuySuggestion(p, sold))
+		suggestions = append(suggestions, makeBuySuggestion(p, sold, festivals))
 	}
 
 	// Biggest buy first.

@@ -1,11 +1,7 @@
 package main
 import(
 	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
-	"strings"
-	"time"
 )
 type DeleteFestivalRequest struct{
 	ID int `json:"id"`
@@ -35,7 +31,7 @@ func loadFestivals()([]Festival,error){
 }
 
 
-func insertFestivals(f Festival)(int,error){
+func insertFestival(f Festival)(int,error){
 	effects,err:=json.Marshal(f.Effects)
 	if err!=nil{
 		return 0,err
@@ -48,4 +44,21 @@ func insertFestivals(f Festival)(int,error){
 	}
 	id,err:=result.LastInsertId()
 	return int(id),err
+}
+
+func insertDefaultFestivals(){
+	var count int
+	err:=db.QueryRow("SELECT COUNT(*) FROM festivals").Scan(&count)
+	if(err!=nil){
+		log.Fatal(err)
+	}
+	if(count>0){
+		return
+	}
+	for _,f:=range defaultFestivals{
+		_,err=insertFestival(f)
+		if(err!=nil){
+			log.Fatal(err)
+		}
+	}
 }
