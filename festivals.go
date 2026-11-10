@@ -1,7 +1,11 @@
 package main
-import(
+
+import (
 	"encoding/json"
 	"log"
+	"net/http"
+	"time"
+	"strings"
 )
 type DeleteFestivalRequest struct{
 	ID int `json:"id"`
@@ -61,4 +65,50 @@ func insertDefaultFestivals(){
 			log.Fatal(err)
 		}
 	}
+}
+func readFestival(w http.ResponseWriter, r *http.Request)(Festival,bool){
+	var f Festival
+	if !readJSON(w,r,&f){
+		return f,false
+	}
+	f.Name=strings.TrimSpace(f.Name)
+	if f.Name==""{
+		http.Error(w,"Name is required",http.StatusBadRequest)
+		return f,false
+	}
+	_,startErr:=time.Parse("2006-01-02",f.Start)
+	_,endErr:=time.Parse("2006-01-02",f.End)
+	if startErr!=nil || endErr!=nil{
+		http.Error(w,"Start and end must look like 2006-10-14",http.StatusBadRequest)
+		return f,false
+	}
+	if(f.End<f.Start){
+		http.Error(w,"End date can not be before start date",http.StatusBadRequest)
+		return f,false
+	}
+	if(len(f.Effects)==0){
+		http.Error(w,"Add at least one category with its multiplier",http.StatusBadRequest)
+		return f,false
+	}
+
+	effects:=map[string]float64{}
+	for category,multiplier:=range f.Effects{
+		category=strings.TrimSpace(category)
+		if(category==""){
+			http.Error(w, "Category can not be empty", http.StatusBadRequest)
+			return f,false
+		}
+		if(multiplier<=0 || multiplier>10){
+			http.Error(w, "Multiplier must be between 0 and 10", http.StatusBadRequest)
+			return f,false
+		}
+		_,found:=effects[category]
+		if(found){
+			http.Error(w,category+" is added twice",http.StatusBadRequest)
+			return f,false
+		}
+		effects[category]=multiplier
+	}
+	f.Effects=effects
+	return f,true
 }
