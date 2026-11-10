@@ -133,3 +133,32 @@ func addFestival(w http.ResponseWriter,r *http.Request){
 	f.ID=id
 	writeJSON(w,f)
 }
+func updateFestival(w http.ResponseWriter,r *http.Request){
+	f,ok:=readFestival(w,r)
+	if(ok==false){
+		return
+	}
+	//map---->>>>text conversion using Marshal
+	effects,err:=json.Marshal(f.Effects)
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	result,err:=db.Exec("UPDATE festivals SET name = ?,start_date=?,end_date=?,effects=? WHERE id=?",
+				f.Name,f.Start,f.End,string(effects),f.ID)
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	count,err:=result.RowsAffected()
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	if(count==0){
+		http.Error(w,"Festival not found",http.StatusNotFound)
+		return
+	}
+	writeJSON(w,map[string]string{"message":"Festival updated"})
+
+}
