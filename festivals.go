@@ -120,3 +120,16 @@ func listFestivals(w http.ResponseWriter,r *http.Request){
 	}
 	writeJSON(w,festivals)
 }
+func addFestival(w http.ResponseWriter,r *http.Request){
+	f,ok:=readFestival(w,r)
+	if(ok==false){
+		return
+	}
+	id,err:=insertFestival(f)
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	f.ID=id
+	writeJSON(w,f)
+}
