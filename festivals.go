@@ -112,3 +112,11 @@ func readFestival(w http.ResponseWriter, r *http.Request)(Festival,bool){
 	f.Effects=effects
 	return f,true
 }
+func listFestivals(w http.ResponseWriter,r *http.Request){
+	festivals,err:=loadFestivals()
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w,festivals)
+}
