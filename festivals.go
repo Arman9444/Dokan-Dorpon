@@ -162,3 +162,25 @@ func updateFestival(w http.ResponseWriter,r *http.Request){
 	writeJSON(w,map[string]string{"message":"Festival updated"})
 
 }
+
+func deleteFestival(w http.ResponseWriter,r *http.Request){
+	var req DeleteFestivalRequest
+	if(readJSON(w,r,&req)==false){
+		return
+	}
+
+	result,err:=db.Exec("DELETE FROM festivals WHERE id=?",req.ID)
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	count,err:=result.RowsAffected()
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+	if(count==0){
+		http.Error(w, "Festival not found", http.StatusNotFound)
+		return
+	}
+}
