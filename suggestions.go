@@ -104,5 +104,41 @@ func pickDiscount(p Product,soldLast30 int,expiryDate string)(int,string) {
 }
 
 func discountSuggestions(w http.ResponseWriter,r *http.Request){
-	
+	products,err:=loadProducts()
+	if(err!=nil){
+		http.Error(w,err.Error(),http.StatusInternalServerError)
+		return
+	}
+
+	suggestions:=[]DiscountSuggestions{}
+	for _,p:=range products{
+		if(p.Stock==0){
+			continue
+		}
+
+		sold,err:=soldLast30Days(p.ID)
+		if(err!=nil){
+			http.Error(w,err.Error(),http.StatusInternalServerError)
+			return
+		}
+
+		expiry,err:=nearestExpiry(p.ID)
+		if(err!=nil){
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		percent,reason:=pickDiscount(p,sold,expiry)
+
+		if(percent>p.Discount){
+			suggestions=append(suggestions,DiscoundSuggestions{
+				productID:p.ID,
+				Name:p.Name,
+				Current:p.Discount,
+				Suggested:percent,
+				Reason:reason,
+			})
+		}
+	}
+	writeJSON(w,suggestions)
 }
