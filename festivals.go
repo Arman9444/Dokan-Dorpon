@@ -183,4 +183,5 @@ func deleteFestival(w http.ResponseWriter,r *http.Request){
 		http.Error(w, "Festival not found", http.StatusNotFound)
 		return
 	}
+	writeJSON(w, map[string]string{"message":"Festival deleted"})
 }
