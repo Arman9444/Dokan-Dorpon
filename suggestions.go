@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"fmt"
 )
 
 type ExpiryAlert struct {
@@ -76,6 +77,28 @@ func nearestExpiry(productID int)(string,error){
 	var date string
 	err:=db.QueryRow("SELECT COLESCE(MIN(expiry_date),'') FROM purchases WHERE product_id=? AND remaining>0 AND expiry_date>=?",
 		 productID,today()).Scan(&date)
-		 
+
 	return date,err
+}
+
+func pickDiscount(p Product,soldLast30 int,expiryDate string)(int,string) {
+	daysLeft:=999
+	if(expiryDate!=""){
+		daysLeft=daysBetween(today(),expiryDate)
+	}
+	if(daysLeft<=3){
+		return 30,fmt.Sprintf("Expires in %d days",daysLeft)
+	}
+	if(soldLast30==0){
+		return 20,"No sale in the last 30 days"
+	}
+	if(daysLeft<=7){
+		return 15,fmt.Sprintf("Expires in %d days",daysLeft)
+	}
+
+	daysOfStock:=float64(p.Stock)/(float64(soldLast30)/30)
+	if(daysOfStock>60){
+		return 10,fmt.Sprintf("Stock will last about %.0f days",daysOfStock)
+	}
+	return 0,""
 }
