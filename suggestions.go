@@ -71,3 +71,11 @@ func loadExpiryAlerts()([]ExpiryAlert,error){
 	return alerts,rows.Err()
 
 }
+
+func nearestExpiry(productID int)(string,error){
+	var date string
+	err:=db.QueryRow("SELECT COLESCE(MIN(expiry_date),'') FROM purchases WHERE product_id=? AND remaining>0 AND expiry_date>=?",
+		 productID,today()).Scan(&date)
+		 
+	return date,err
+}
