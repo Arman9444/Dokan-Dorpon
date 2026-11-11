@@ -5,28 +5,24 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"time"
 
 	_ "modernc.org/sqlite"
 )
 
-// db is the global database connection, shared by all handlers.
-// We use = not := because db is declared at package level, not inside a function.
+// global database connection, shared by all handlers.
 var db *sql.DB
 
-func openDatabase() {
+func openDatabase(fileName string) {
 	var err error
-	// sql.Open does not actually connect; it just prepares the connection.
-	// The real connection happens on the first query.
-	db, err = sql.Open("sqlite", "grocery.db")
+	//just prepares the connection.....not connect.
+	db, err = sql.Open("sqlite", fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// SQLite is a single file, so only one connection at a time is safe.
+	//SQLite-->>single file...so one connection
 	db.SetMaxOpenConns(1)
 
-	// Turn on foreign key checks. SQLite ignores foreign keys by default.
 	_, err = db.Exec("PRAGMA foreign_keys = ON")
 	if err != nil {
 		log.Fatal(err)
@@ -34,8 +30,7 @@ func openDatabase() {
 }
 
 func createTables() {
-	// We run all three CREATE TABLE statements in one Exec call.
-	// IF NOT EXISTS means this is safe to call every time the server starts.
+	// Safe Call
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS products (
 			id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,6 +62,25 @@ func createTables() {
 			buy_price   REAL    NOT NULL,
 			discount    INTEGER NOT NULL DEFAULT 0,
 			sale_date   TEXT    NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS festivals(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			start_date TEXT NOT NULL,
+			end_date TEXT NOT NULL,
+			effects TEXT NOT NULL
+		);
+		
+		CREATE TABLE IF NOT EXISTS owner(
+			id 	INTEGER PRIMARY KEY CHECK(id=1),
+			username TEXT NOT NULL,
+			salt TEXT NOT NULL,
+			password_hash TEXT NOT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS sessions(
+			token TEXT PRIMARY KEY,
+			created TEXT NOT NULL
 		);
 	`)
 	if err != nil {
@@ -117,6 +131,11 @@ func insertSampleData() {
 		return
 	}
 
+	festivals, err := loadFestivals()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -124,7 +143,7 @@ func insertSampleData() {
 	defer tx.Rollback()
 
 	for _, s := range samples {
-		err = insertSampleProduct(tx, s)
+		err = insertSampleProduct(tx, s, festivals)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -136,7 +155,7 @@ func insertSampleData() {
 	}
 }
 
-func insertSampleProduct(tx *sql.Tx, s SampleProduct) error {
+func insertSampleProduct(tx *sql.Tx, s SampleProduct, festivals []Festival) error {
 	result, err := tx.Exec("INSERT INTO products (name, category, unit, buy_price, sell_price, stock, min_stock, discount) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
 		s.Name, s.Category, s.Unit, s.BuyPrice, s.SellPrice, s.Stock, s.MinStock)
 	if err != nil {
@@ -159,8 +178,8 @@ func insertSampleProduct(tx *sql.Tx, s SampleProduct) error {
 	}
 
 	for i := 364; i >= 0; i-- {
-		day := time.Now().AddDate(0, 0, -i)
-		multiplier, _ := getMultiplier(s.Category, day)
+		day := todayTime().AddDate(0, 0, -i)
+		multiplier, _ := getMultiplier(s.Category, day, festivals)
 		random := 0.7 + rand.Float64()*0.6
 		quantity := int(math.Round(s.DailySale * multiplier * random))
 		if quantity == 0 {
