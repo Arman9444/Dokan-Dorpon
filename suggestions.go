@@ -110,7 +110,7 @@ func discountSuggestions(w http.ResponseWriter,r *http.Request){
 		return
 	}
 
-	suggestions:=[]DiscountSuggestions{}
+	suggestions:=[]DiscountSuggestion{}
 	for _,p:=range products{
 		if(p.Stock==0){
 			continue
@@ -131,8 +131,8 @@ func discountSuggestions(w http.ResponseWriter,r *http.Request){
 		percent,reason:=pickDiscount(p,sold,expiry)
 
 		if(percent>p.Discount){
-			suggestions=append(suggestions,DiscoundSuggestions{
-				productID:p.ID,
+			suggestions=append(suggestions,DiscountSuggestion{
+				ProductID:p.ID,
 				Name:p.Name,
 				Current:p.Discount,
 				Suggested:percent,
