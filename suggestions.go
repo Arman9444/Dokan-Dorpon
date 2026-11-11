@@ -102,3 +102,7 @@ func pickDiscount(p Product,soldLast30 int,expiryDate string)(int,string) {
 	}
 	return 0,""
 }
+
+func discountSuggestions(w http.ResponseWriter,r *http.Request){
+	
+}
