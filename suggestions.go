@@ -43,3 +43,31 @@ func getAlerts(w http.ResponseWriter,r *http.Request){
 	}
 	writeJSON(w,map[string]any{"low_stock":lowStock,"expiry":expiry,})
 }
+
+func loadExpiryAlerts()([]ExpiryAlert,error){
+	rows,err:=db.Query(`
+	SELECT name FROM products WHERE products.id=purchases.product_id),
+	SELECT unit FROM products WHERE products.id=purchases.product_id),
+	remaining,expiry_date FROM purchases WHERE 
+	remaining>0 AND expiry_date!='' AND expiry_date<=?
+	ORDER BY expiry_date`,daysFromToday(7))
+
+	if(err!=nil){
+		return nil,err
+	}
+	defer rows.Close()
+
+	now:=today()
+	alerts:=[]ExpiryAlert{}
+	for rows.Next(){
+		var a ExpiryAlert
+		err:=rows.Scan(&a.BatchID,&a.Name,&a.Unit,&a.Remaining,&a.ExpiryDate)
+		if(err!=nil){
+			return nil,err
+		}
+		a.DaysLeft=daysBetween(now,a.ExpiryDate)
+		alerts=append(alerts, a)
+	}
+	return alerts,rows.Err()
+
+}
