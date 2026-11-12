@@ -4,12 +4,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"flag" //giving extra option to terminal (like go run . -today=2026-05-14)
+	
+
 )
 
 func main() {
+	//
+
+	demoDate:=flag.String("today","","demo mode: pretent today is this date, like 2026-05-14")
+	flag.Parse()//reading flag from terminal
 	fileName:="grocery.db"
+	if(*demoDate!=""){
+		fileName=startDemo(*demoDate)
+	}
 	openDatabase(fileName)
 	createTables()
+	insertDefaultFestivals()
 	insertSampleData()
 
 	http.HandleFunc("GET /api/products", listProducts)
@@ -21,6 +32,13 @@ func main() {
 	http.HandleFunc("GET /api/sales/recent", recentSales)
 	http.HandleFunc("POST /api/purchases", addPurchase)
 	http.HandleFunc("POST /api/purchases/remove-expired", removeExpired)
+
+
+	http.HandleFunc("GET /api/festivals", listFestivals)
+	http.HandleFunc("POST /api/festivals", addFestival)
+	http.HandleFunc("POST /api/festivals/update", updateFestival)
+	http.HandleFunc("POST /api/festivals/delete", deleteFestival)
+
 
 	http.HandleFunc("GET /api/occasions", getOccasions)
 	http.HandleFunc("GET /api/suggestions/buy", buySuggestions)
