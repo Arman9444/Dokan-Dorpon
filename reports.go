@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -15,6 +16,13 @@ type ReportItem struct {
 	Income    float64 `json:"income"`
 	Cost      float64 `json:"cost"`
 	Profit    float64 `json:"profit"`
+}
+
+type ChartMonth struct {
+	Month    int     `json:"month"`
+	Quantity int     `json:"quantity"`
+	Income   float64 `json:"income"`
+	Profit   float64 `json:"profit"`
 }
 
 func findType(period string) string {
@@ -105,4 +113,70 @@ func getReport(w http.ResponseWriter, r *http.Request) {
 		"total_profit": round2(totalIncome - totalCost),
 		"best_product": best,
 	})
+}
+
+func loadChart(year string, id int) ([]ChartMonth, error) {
+	months := []ChartMonth{}
+	for i := 1; i <= 12; i++ {
+		months = append(months, ChartMonth{Month: i})
+	}
+
+	query := `SELECT substr(sale_date, 6, 2), SUM(quantity), SUM(quantity * sell_price), SUM(quantity * buy_price)
+		FROM sales WHERE sale_date LIKE ? || '%'`
+	values := []any{year}
+	if id > 0 {
+		query = query + " AND product_id = ?"
+		values = append(values, id)
+	}
+	query = query + " GROUP BY substr(sale_date, 6, 2)"
+
+	rows, err := db.Query(query, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var month string
+		var quantity int
+		var income, cost float64
+		err := rows.Scan(&month, &quantity, &income, &cost)
+		if err != nil {
+			return nil, err
+		}
+		number, err := strconv.Atoi(month)
+		if err != nil {
+			return nil, err
+		}
+		months[number-1].Quantity = quantity
+		months[number-1].Income = round2(income)
+		months[number-1].Profit = round2(income - cost)
+	}
+	return months, rows.Err()
+}
+
+func getChart(w http.ResponseWriter, r *http.Request) {
+	year := r.URL.Query().Get("year")
+	_, err := time.Parse("2006", year)
+	if err != nil {
+		http.Error(w, "Year must look like 2026", http.StatusBadRequest)
+		return
+	}
+
+	id := 0
+	text := r.URL.Query().Get("product_id")
+	if text != "" {
+		id, err = strconv.Atoi(text)
+		if err != nil {
+			http.Error(w, "product_id must be a number", http.StatusBadRequest)
+			return
+		}
+	}
+
+	months, err := loadChart(year, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, months)
 }

@@ -18,6 +18,7 @@ func main() {
 	http.HandleFunc("POST /api/products/discount", setDiscount)
 
 	http.HandleFunc("GET /api/report", getReport)
+	http.HandleFunc("GET /api/chart", getChart)
 
 	http.HandleFunc("POST /api/sales", addSale)
 	http.HandleFunc("GET /api/sales/recent", recentSales)
