@@ -33,6 +33,115 @@ main {
   padding-bottom: 20px;
 }
 
+/* ---------- Header and tabs ---------- */
+
+header {
+  background-color: var(--red);
+  color: white;
+  padding: 14px 0 12px 0;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+}
+
+header .bangla {
+  margin-left: 8px;
+  font-size: 18px;
+  font-weight: normal;
+  opacity: 0.85;
+}
+
+header p {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+}
+
+header b {
+  color: #ffe29a; /* gold, like the title printed on a khata cover */
+}
+
+.divider {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+
+/* The menu button on the left, the title next to it. */
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* The menu list drops down from the button, so it is placed relative to this box. */
+.menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Three white bars on the red cover. */
+.menu-button {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 7px 9px;
+}
+
+.menu-button:hover,
+.menu.open .menu-button {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.menu-button span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  margin: 4px 0;
+  background-color: white;
+}
+
+/* Hidden until the button adds "open" to .menu. It floats over the page below. */
+.menu nav {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20; /* above the sticky message box */
+  min-width: 180px;
+  flex-direction: column;
+  background-color: var(--paper);
+  border-left: 6px double var(--red);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.menu.open nav {
+  display: flex;
+}
+
+/* One row per tab, ruled like a ledger line. */
+.menu nav button {
+  background-color: transparent;
+  color: #333;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 16px;
+  text-align: left;
+}
+
+.menu nav button:last-child {
+  border-bottom: none;
+}
+
+.menu nav button:hover {
+  background-color: #f6eed8;
+}
+
+.menu nav button.active {
+  color: var(--red);
+  font-weight: bold;
+}
 section {
   background-color: var(--paper);
   border-left: 6px double var(--red);
@@ -151,6 +260,9 @@ button.small {
 }
 
 @media (max-width: 700px) {
+  header h1 {
+    font-size: 22px;
+  }
   section {
     padding: 12px 14px 18px 14px;
   }
