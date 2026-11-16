@@ -10,8 +10,28 @@
 <body>
   <header>
     <div class="wrap header-row">
+      <div class="menu">
+        <button id="menu-button" class="menu-button" aria-label="Menu" aria-expanded="false"
+                aria-controls="menu" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+        <nav id="menu">
+          <button data-tab="dashboard" class="active" onclick="showTab('dashboard')">Dashboard</button>
+          <button data-tab="products" onclick="showTab('products')">Products</button>
+          <button data-tab="sell" onclick="showTab('sell')">Sell</button>
+          <button data-tab="stock-in" onclick="showTab('stock-in')">Stock in</button>
+          <button data-tab="reports" onclick="showTab('reports')">Reports</button>
+          <button data-tab="suggestions" onclick="showTab('suggestions')">Suggestions</button>
+          <button data-tab="festivals" onclick="showTab('festivals')">Festivals</button>
+        </nav>
+      </div>
       <div>
         <h1>Dokan Dorpon <span class="bangla" lang="bn">দোকান দর্পণ</span></h1>
+        <p>
+          Today: <b id="today">-</b>
+          <span class="divider">|</span> Festival / season now: <b id="occasions">-</b>
+          <span class="divider">|</span> Coming in 60 days: <b id="upcoming">-</b>
+        </p>
       </div>
     </div>
   </header>
@@ -22,18 +42,59 @@
     <section id="dashboard">
       <h2>Dashboard</h2>
     </section>
-
     <section id="products" class="hidden">
       <h2>Products</h2>
     </section>
 
     <section id="sell" class="hidden">
       <h2>Sell</h2>
+      <form id="sell-form">
+        <label>Product
+          <select id="sell-product"></select>
+        </label>
+        <label>Quantity
+          <input type="number" id="sell-qty" min="1" required>
+        </label>
+        <p>Total: <b id="sell-total">৳0.00</b></p>
+        <button type="submit">Sell</button>
+      </form>
+
+      <h3>Last 15 sales</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Discount</th>
+            <th>Total</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="sell-table"></tbody>
+      </table>
     </section>
+
 
     <section id="stock-in" class="hidden">
       <h2>Stock in</h2>
+      <form id="stock-in-form">
+        <label>Product
+          <select id="si-product"></select>
+        </label>
+        <label>Quantity
+          <input type="number" id="si-qty" min="1" required>
+        </label>
+        <label>Buy price (৳)
+          <input type="number" id="si-price" min="0.01" step="0.01" required>
+        </label>
+        <label>Expiry date (leave empty if no expiry)
+          <input type="date" id="si-expiry">
+        </label>
+        <button type="submit">Add stock</button>
+      </form>
     </section>
+
 
     <section id="reports" class="hidden">
       <h2>Reports</h2>
