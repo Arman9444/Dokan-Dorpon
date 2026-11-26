@@ -57,6 +57,7 @@ function emptyRow(columns, text) {
 function findProduct(id) {
   return products.find((p) => p.id === Number(id));
 }
+// setMenuOpen opens or closes the hamburger menu in the top right corner.
 function setMenuOpen(open) {
   document.querySelector(".menu").classList.toggle("open", open);
   document.getElementById("menu-button").setAttribute("aria-expanded", open);
@@ -72,9 +73,10 @@ function showTab(name) {
   document.querySelectorAll("nav button").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === name);
   });
-  setMenuOpen(false);
+    setMenuOpen(false);
 }
 
+// ---------- Header ----------
 async function loadOccasions() {
   try {
     const data = await api("/api/occasions");
@@ -135,8 +137,20 @@ document.getElementById("stock-in-form").addEventListener("submit", async functi
 });
 
 
+// A click outside the menu, or the Escape key, closes it.
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".menu")) {
+    setMenuOpen(false);
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    setMenuOpen(false);
+  }
+});
+
 async function start() {
-  await loadOccasions();
+  await loadOccasions(); // first, because everything below needs serverToday
   try {
     const prods = await api("/api/products");
     products = prods;
@@ -148,7 +162,6 @@ async function start() {
   }
   showTab("dashboard");
 }
-
 function loadSellProducts() {
   const sel = document.getElementById("sell-product");
   sel.innerHTML = products.map(p =>
