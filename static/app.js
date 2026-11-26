@@ -190,7 +190,7 @@ document.getElementById("sell-form").addEventListener("submit", async function(e
     showMessage("Sale saved");
     document.getElementById("sell-form").reset();
     await loadRecentSales();
-    await loadProducts();
+    products = await api("/api/products");
     loadSellProducts();
   } catch (err) {
     showMessage(err.message, true);
