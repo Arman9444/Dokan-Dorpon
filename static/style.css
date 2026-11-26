@@ -254,7 +254,110 @@ button.small {
   display: flex;
   gap: 8px;
 }
+/* ---------- Tables: blue ruled lines like a ledger page ---------- */
 
+/* A wide table scrolls sideways instead of breaking the page. */
+.table-box {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  color: var(--dark-red);
+  border-bottom: 2px solid var(--red);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+td {
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+
+td small {
+  color: gray;
+  font-weight: normal;
+}
+
+/* Numbers line up on the right, like the money column of a ledger. */
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+tbody tr:hover td {
+  background-color: #f6eed8;
+}
+
+tr.low td {
+  background-color: var(--pale-red);
+}
+
+tr.expired td {
+  color: var(--red);
+  font-weight: bold;
+}
+
+tr.muted td {
+  color: #5f6f99;
+}
+
+.loss {
+  color: var(--red);
+}
+
+.empty {
+  color: gray;
+  text-align: center;
+}
+
+/* A reason in the buy suggestions, like "Durga Puja 2026 x2". */
+.tag {
+  display: inline-block;
+  background-color: #e3eaf8;
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 1px 8px;
+  margin: 1px 0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------- Message box ---------- */
+
+/* sticky: it stays at the top of the screen while the page scrolls. */
+.message {
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  background-color: #e6f4e7;
+  color: var(--green);
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.message.error {
+  background-color: var(--pale-red);
+  color: var(--red);
+  border-color: var(--red);
+}
 .hidden {
   display: none;
 }
