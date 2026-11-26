@@ -46,12 +46,13 @@ func getAlerts(w http.ResponseWriter,r *http.Request){
 }
 
 func loadExpiryAlerts()([]ExpiryAlert,error){
-	rows,err:=db.Query(`
-	SELECT name FROM products WHERE products.id=purchases.product_id),
-	SELECT unit FROM products WHERE products.id=purchases.product_id),
-	remaining,expiry_date FROM purchases WHERE 
+	rows, err := db.Query(`
+	SELECT id,
+	(SELECT name FROM products WHERE products.id=purchases.product_id),
+	(SELECT unit FROM products WHERE products.id=purchases.product_id),
+	remaining,expiry_date FROM purchases WHERE
 	remaining>0 AND expiry_date!='' AND expiry_date<=?
-	ORDER BY expiry_date`,daysFromToday(7))
+	ORDER BY expiry_date`, daysFromToday(7))
 
 	if(err!=nil){
 		return nil,err
@@ -67,6 +68,7 @@ func loadExpiryAlerts()([]ExpiryAlert,error){
 			return nil,err
 		}
 		a.DaysLeft=daysBetween(now,a.ExpiryDate)
+		a.Expired = a.ExpiryDate < now
 		alerts=append(alerts, a)
 	}
 	return alerts,rows.Err()
@@ -75,7 +77,7 @@ func loadExpiryAlerts()([]ExpiryAlert,error){
 
 func nearestExpiry(productID int)(string,error){
 	var date string
-	err:=db.QueryRow("SELECT COLESCE(MIN(expiry_date),'') FROM purchases WHERE product_id=? AND remaining>0 AND expiry_date>=?",
+		err := db.QueryRow("SELECT COALESCE(MIN(expiry_date),'') FROM purchases WHERE product_id=? AND remaining>0 AND expiry_date>=?",
 		 productID,today()).Scan(&date)
 
 	return date,err
