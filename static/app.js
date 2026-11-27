@@ -74,6 +74,9 @@ function showTab(name) {
     button.classList.toggle("active", button.dataset.tab === name);
   });
     setMenuOpen(false);
+  if(name==="dashboard"){
+    loadDashboard();
+  }
 }
 
 // ---------- Header ----------
@@ -93,6 +96,17 @@ async function loadOccasions() {
     document.getElementById("upcoming").textContent = coming.length > 0 ? coming.join(", ") : "None";
   } catch (err) {
     showMessage(err.message, true);
+  }
+}
+
+async function loadDashboard(){
+  try {
+    const report=await api("/api/report?period="+serverToday);
+    document.getElementById("today-income").textContent = money(report.total_income);
+    document.getElementById("today-profit").textContent=money(report.total_profit);
+    document.getElementById("today-items").textContent = report.total_qty;
+  }catch(err){
+    showMessage(err.message,true);
   }
 }
 
