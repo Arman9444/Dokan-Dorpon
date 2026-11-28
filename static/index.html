@@ -46,6 +46,26 @@
         <div class="stat">Today's profit (৳) <b id="today-profit">0</b></div>
         <div class="stat">Items sold today <b id="today-items">0</b></div>
       </div>
+
+      <h3>Monthly chart</h3>
+      <div class="form">
+        <label>Year <input type="number" id="chart-year" min="2000" max="2100"></label>
+        <label>Product
+          <select id="chart-product">
+            <option value="">All products</option>
+          </select>
+        </label>
+        <label>Show
+           <select id="chart-metric">
+            <option value="quantity">Quantity</option>
+            <option value="income">Income (৳)</option>
+            <option value="profit">Profit (৳)</option>
+          </select>
+        </label>
+      </div>
+      <div id="chart" class="chart">
+        <p class="empty">No data yet</p>
+      </div>
     </section>
     <section id="products" class="hidden">
       <h2>Products</h2>

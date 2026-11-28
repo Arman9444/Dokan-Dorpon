@@ -76,6 +76,7 @@ function showTab(name) {
     setMenuOpen(false);
   if(name==="dashboard"){
     loadDashboard();
+    loadChart();
   }
 }
 
@@ -110,7 +111,53 @@ async function loadDashboard(){
   }
 }
 
+async function loadChart(){
+  let url="/api/chart?year="+document.getElementById("chart-year").value;
+  const productID = document.getElementById("chart-product").value;
+  if(productID!==""){
+    url=url+"&product_id="+productID;
+  }
+  try {
+    chartMonths=await api(url);
+    drawChart(chartMonths,document.getElementById("chart-metric").value);
+  }catch(err){
+    showMessage(err.message,true);
+  }
+}
+function drawChart(months, metric){
+  let max=0;
+  months.forEach((m)=>{
+    max = Math.max(max,m[metric]);
+  });
+  let bars="";
+  let labels = "";
+  months.forEach((m) => {
+    const value=m[metric];
+    let height=0;
+    if(max>0 && value>0){
+      height=(value/max)*100;
+    }
+    const name = monthNames[m.month-1];
+    const text=metric==="quantity" ? value : money(value);
+    bars=bars+`<div class="bar" style="height: ${height}%" title="${name}: ${text}"><span>${shortNumber(value)}</span></div>`;
+    labels = labels+`<span>${name}</span>`;
+  });
+  document.getElementById("chart").innerHTML=`<div class="bars">${bars}</div><div class="months">${labels}</div>`;
+}
+
+function shortNumber(value){
+  if(Math.abs(value)>=1000){
+    return (value/1000).toFixed(1)+"k";
+  }
+  return String(Math.round(value));
+}
+
 // ---------- Start ----------
+document.getElementById("chart-year").addEventListener("change", loadChart);
+document.getElementById("chart-product").addEventListener("change",loadChart);
+document.getElementById("chart-metric").addEventListener("change", ()=>{
+  drawChart(chartMonths,document.getElementById("chart-metric").value);
+});
 
 // A click outside the menu, or the Escape key, closes it.
 document.addEventListener("click", (event) => {
@@ -165,6 +212,7 @@ document.addEventListener("keydown", (event) => {
 
 async function start() {
   await loadOccasions(); // first, because everything below needs serverToday
+  document.getElementById("chart-year").value=serverToday.slice(0,4);
   try {
     const prods = await api("/api/products");
     products = prods;
